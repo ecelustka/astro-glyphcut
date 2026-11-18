@@ -41,7 +41,7 @@
     "test:types": "tsc -p test/fixtures/consumer && pnpm dlx --package typescript@6 tsc -p test/fixtures/consumer",
     "check:package": "pnpm build && publint && attw --pack --profile esm-only",
     "verify": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm knip && pnpm check:package && pnpm test",
-    "release": "pnpm build && changeset publish"
+    "changeset:version": "changeset version"
   },
   "dependencies": {
     "fontverter": "^2.0.0",

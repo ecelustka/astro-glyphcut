@@ -3,6 +3,13 @@ name: Release
 on:
   push:
     branches: [main]
+  # Publishes an existing release tag again when an earlier publish did not reach npm.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to publish, for example astro-glyphcut@0.1.1
+        required: true
+        type: string
 
 concurrency:
   group: release
@@ -10,6 +17,7 @@ concurrency:
 
 jobs:
   version:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,33 +35,65 @@ jobs:
       - id: changesets
         uses: changesets/action@v2.1.2
         with:
-          version-script: pnpm changeset version
+          version-script: pnpm changeset:version
           commit-message: "chore: version packages"
           pr-title: "chore: version packages"
 
   publish:
     needs: version
-    # Publish only on the merge of the version PR. Its commit message starts with the
-    # commit-message input above (a squash merge adds " (#N)").
+    # Publish on the merge of the version PR or on a manual run. The merge commit message
+    # starts with the commit-message input above (a squash merge adds " (#N)").
     if: >-
-      needs.version.outputs.has-changesets == 'false' &&
-      startsWith(github.event.head_commit.message, 'chore: version packages')
+      !cancelled() && (
+        github.event_name == 'workflow_dispatch' || (
+          needs.version.result == 'success' &&
+          needs.version.outputs.has-changesets == 'false' &&
+          startsWith(github.event.head_commit.message, 'chore: version packages')
+        )
+      )
     runs-on: ubuntu-latest
     environment: npm
     permissions:
       contents: write
-      pull-requests: write
       id-token: write
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.sha }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version: 26
       - run: pnpm install --frozen-lockfile
-      - uses: changesets/action@v2.1.2
-        with:
-          publish-script: pnpm release
-          create-github-releases: true
+      - run: pnpm build
+      - id: pkg
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          echo "tag=$name@$version" >> "$GITHUB_OUTPUT"
+          if npm view "$name@$version" version > /dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      # pnpm packs, npm uploads: pnpm 12 publish exited 0 without a version on npm (0.1.1).
+      - name: Publish to npm
+        if: steps.pkg.outputs.published == 'false'
+        run: |
+          npm --version
+          pnpm pack --out package.tgz
+          npm publish package.tgz --access public --provenance
+      - name: Tag and release
         env:
-          NPM_CONFIG_PROVENANCE: true
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.pkg.outputs.tag }}
+        run: |
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" > /dev/null; then
+            git tag "$TAG"
+            git push origin "refs/tags/$TAG"
+          fi
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            version="${TAG##*@}"
+            awk -v h="## $version" '$0 == h { on = 1; next } on && /^## / { exit } on' CHANGELOG.md > notes.md
+            gh release create "$TAG" --title "$TAG" --notes-file notes.md --verify-tag
+          fi
