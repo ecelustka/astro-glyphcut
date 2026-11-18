@@ -10,7 +10,12 @@
     "subset",
     "woff2"
   ],
+  "homepage": "https://github.com/ecelustka/astro-glyphcut#readme",
+  "bugs": {
+    "url": "https://github.com/ecelustka/astro-glyphcut/issues"
+  },
   "license": "MIT",
+  "author": "Emil Celustka",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ecelustka/astro-glyphcut.git"
