@@ -32,6 +32,15 @@ describe("subset", () => {
     for (const tag of info.features) expect(features).toContain(tag);
   });
 
+  test("reports whether the source is variable", async () => {
+    expect((await subset({ data: await schibsted(), glyphs })).variable).toBe(true);
+    const mono = await fontsourceFile(
+      "@fontsource/jetbrains-mono",
+      "jetbrains-mono-latin-400-normal.woff2",
+    );
+    expect((await subset({ data: mono, glyphs })).variable).toBe(false);
+  });
+
   test("clamps the wght axis", async () => {
     const out = await subset({
       data: await schibsted(),

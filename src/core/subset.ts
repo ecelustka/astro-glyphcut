@@ -13,7 +13,7 @@ export type SubsetInput = {
   weight?: { min: number; max: number };
 };
 
-export type SubsetResult = { data: Uint8Array; missing: number[] };
+export type SubsetResult = { data: Uint8Array; missing: number[]; variable: boolean };
 
 export async function subset(input: SubsetInput): Promise<SubsetResult> {
   const { data, glyphs, features, weight } = input;
@@ -38,5 +38,5 @@ export async function subset(input: SubsetInput): Promise<SubsetResult> {
     ...(features && { keepFeatures: features }),
     ...(weight && source.axes.wght && { variationAxes: { wght: weight } }),
   });
-  return { data: new Uint8Array(out), missing };
+  return { data: new Uint8Array(out), missing, variable: "wght" in source.axes };
 }
