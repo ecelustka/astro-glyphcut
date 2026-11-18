@@ -1,5 +1,7 @@
 # astro-glyphcut
 
+[![npm](https://img.shields.io/npm/v/astro-glyphcut)](https://www.npmjs.com/package/astro-glyphcut) [![CI](https://github.com/ecelustka/astro-glyphcut/actions/workflows/ci.yml/badge.svg)](https://github.com/ecelustka/astro-glyphcut/actions/workflows/ci.yml)
+
 An Astro font provider that subsets fonts to the glyphs your site uses, at build time. Astro's Google provider has an `experimental.glyphs` option too, but only for Google fonts, and without control over OpenType features or the weight axis.
 
 ```sh
