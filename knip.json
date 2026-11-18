@@ -1,0 +1,10 @@
+{
+  "entry": ["src/index.ts"],
+  "project": ["src/**/*.ts", "test/**/*.ts"],
+  "ignoreDependencies": [
+    "astro",
+    "@fontsource-variable/jetbrains-mono",
+    "@fontsource-variable/schibsted-grotesk",
+    "@fontsource/jetbrains-mono"
+  ]
+}

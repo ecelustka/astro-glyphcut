@@ -1,0 +1,12 @@
+{
+  "plugins": ["typescript", "unicorn"],
+  "categories": { "correctness": "error" },
+  "rules": {
+    "eqeqeq": ["error", "smart"],
+    "typescript/consistent-type-imports": ["error", { "fixStyle": "inline-type-imports" }],
+    "typescript/switch-exhaustiveness-check": "error",
+    "unicorn/prefer-node-protocol": "error",
+    "typescript/no-floating-promises": "error",
+    "typescript/no-misused-promises": "error"
+  }
+}
