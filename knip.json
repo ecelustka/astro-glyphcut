@@ -1,5 +1,5 @@
 {
-  "entry": ["src/index.ts"],
+  "entry": ["src/index.ts", "src/**/*.test.ts", "test/**/*.test.ts"],
   "project": ["src/**/*.ts", "test/**/*.ts"],
   "ignoreDependencies": [
     "astro",
