@@ -3,7 +3,6 @@ name: Release
 on:
   push:
     branches: [main]
-  # Publishes an existing release tag again when an earlier publish did not reach npm.
   workflow_dispatch:
     inputs:
       tag:
@@ -41,8 +40,7 @@ jobs:
 
   publish:
     needs: version
-    # Publish on the merge of the version PR or on a manual run. The merge commit message
-    # starts with the commit-message input above (a squash merge adds " (#N)").
+    # Version PR squash merge or manual run.
     if: >-
       !cancelled() && (
         github.event_name == 'workflow_dispatch' || (
@@ -76,7 +74,6 @@ jobs:
           else
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi
-      # pnpm packs, npm uploads: pnpm 12 publish exited 0 without a version on npm (0.1.1).
       - name: Publish to npm
         if: steps.pkg.outputs.published == 'false'
         run: |
