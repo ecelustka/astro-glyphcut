@@ -17,6 +17,16 @@ export default defineConfig({
       fallbacks: ["ui-monospace", "monospace"],
       options: { fontsource: "jetbrains-mono", features: ["calt", "ccmp", "locl", "mark"] },
     },
+    // The same family and style again with another weight. Both cache files must survive.
+    {
+      provider,
+      name: "JetBrains Mono",
+      cssVariable: "--font-jetbrains-mono-bold",
+      weights: ["700"],
+      styles: ["normal"],
+      fallbacks: ["ui-monospace", "monospace"],
+      options: { fontsource: "jetbrains-mono", features: ["calt", "ccmp", "locl", "mark"] },
+    },
     {
       provider,
       name: "Schibsted Grotesk",

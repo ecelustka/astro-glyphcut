@@ -7,7 +7,6 @@ import { pathToFileURL } from "node:url";
 import type { FontProvider } from "astro";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GlyphcutError } from "./core/subset.ts";
 import type { FamilyOptions } from "./index.ts";
 import { glyphcut } from "./provider.ts";
 
@@ -56,14 +55,21 @@ function resolve(
 
 let info: ReturnType<typeof vi.spyOn>;
 let warn: ReturnType<typeof vi.spyOn>;
+let error: ReturnType<typeof vi.spyOn>;
+let once: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
+  // A real exit listener would set the exit code of the test worker.
+  once = vi.spyOn(process, "once").mockImplementation(() => process);
   info = vi.spyOn(console, "info").mockImplementation(() => {});
   warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  error = vi.spyOn(console, "error").mockImplementation(() => {});
 });
 
 afterEach(async () => {
   vi.restoreAllMocks();
+  // A config error sets the exit code. Do not let it fail the test run.
+  process.exitCode = undefined;
   await Promise.all(dirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
@@ -106,9 +112,45 @@ describe("glyphcut provider", () => {
     expect(warn).toHaveBeenCalledWith('[glyphcut] schibsted-grotesk: no glyph for "ž" (U+017E)');
   });
 
-  it("passes core errors to the caller", async () => {
+  it("warns about a missing glyph once per process", async () => {
+    const { provider } = await setup({ ascii: true, extra: "ž" });
+    await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
+    await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs a config error once, returns no fonts and sets exit code 1", async () => {
     const { provider } = await setup({ ascii: true });
-    await expect(resolve(provider, {})).rejects.toThrow(GlyphcutError);
+    await expect(resolve(provider, {})).resolves.toEqual({ fonts: [] });
+    await expect(resolve(provider, {})).resolves.toEqual({ fonts: [] });
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(error).toHaveBeenCalledWith(
+      "[glyphcut] Font Schibsted Grotesk needs either fontsource or src.",
+    );
+    expect(process.exitCode).toBe(1);
+  });
+
+  it("adds an exit listener that keeps exit code 1 after process.exit(0)", async () => {
+    const { provider } = await setup({ ascii: true });
+    await resolve(provider, {});
+    expect(once).toHaveBeenCalledWith("exit", expect.any(Function));
+    const listener = once.mock.calls.find(
+      (call: unknown[]) => call[0] === "exit",
+    )?.[1] as () => void;
+    for (const before of [0, undefined, 2]) {
+      process.exitCode = before;
+      listener();
+      expect(process.exitCode).toBe(before === 2 ? 2 : 1);
+    }
+  });
+
+  it("logs an unexpected error, sets exit code 1 and passes it on", async () => {
+    const { provider } = await setup({ ascii: true });
+    await expect(resolve(provider, { src: { normal: 42 as unknown as string } })).rejects.toThrow(
+      TypeError,
+    );
+    expect(String(error.mock.calls[0]?.[0])).toMatch(/^\[glyphcut\] /);
+    expect(process.exitCode).toBe(1);
   });
 
   it("collapses a variable font with one weight to that weight", async () => {
@@ -158,8 +200,7 @@ describe("glyphcut provider", () => {
       { weights: ["400"], styles: ["normal"] },
     );
     expect(one?.fonts[0]?.weight).toBe("400");
-    await expect(
-      resolve(provider, { src: "fonts/a.woff2" }, { weights: ["400 700"], styles: ["normal"] }),
-    ).rejects.toThrow(/src list/);
+    await resolve(provider, { src: "fonts/a.woff2" }, { weights: ["400 700"], styles: ["normal"] });
+    expect(String(error.mock.calls[0]?.[0])).toMatch(/src list/);
   });
 });

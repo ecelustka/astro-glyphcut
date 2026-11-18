@@ -40,9 +40,37 @@ describe("weightRange", () => {
   it("reads a number", () => {
     expect(weightRange([400])).toEqual({ min: 400, max: 400 });
   });
+  it("reads the normal and bold keywords", () => {
+    expect(weightRange(["normal", "BOLD"])).toEqual({ min: 400, max: 700 });
+    expect(weightRange(["Normal bold"])).toEqual({ min: 400, max: 700 });
+  });
+  it("rejects other keywords", () => {
+    for (const weight of ["bolder", "lighter", "heavy"]) {
+      expect(() => weightRange([weight])).toThrow(GlyphcutError);
+      expect(() => weightRange([weight])).toThrow(`"${weight}"`);
+    }
+  });
 });
 
 describe("findSources with fontsource", () => {
+  it("tells how to drop the italic style that a package does not have", async () => {
+    const { dir, root } = await tempRoot();
+    const pkg = join(dir, "node_modules", "@fontsource-variable", "upright");
+    await mkdir(join(pkg, "files"), { recursive: true });
+    await writeFile(join(pkg, "package.json"), "{}");
+    await writeFile(join(pkg, "files", "upright-latin-wght-normal.woff2"), "x");
+    const error = await rejection(
+      findSources({
+        root,
+        family: "Upright",
+        options: { fontsource: "upright" },
+        weights: ["400"],
+        styles: ["normal", "italic"],
+      }),
+    );
+    expect(error.message).toContain('styles: ["normal"]');
+  });
+
   it("finds the variable files", async () => {
     const files = await findSources({
       root: REPO,
@@ -158,6 +186,37 @@ describe("findSources with src", () => {
     });
     expect(files).toHaveLength(1);
     expect(files[0]).toMatchObject({ path: join(dir, "a.woff2"), weight: 400, style: "normal" });
+  });
+
+  it("reads the normal and bold keywords in list entries", async () => {
+    const { dir, root } = await tempRoot();
+    await writeFile(join(dir, "a.woff2"), "");
+    await writeFile(join(dir, "b.woff2"), "");
+    const files = await findSources({
+      ...base,
+      root,
+      weights: ["normal", "bold"],
+      options: {
+        src: [
+          { path: "a.woff2", weight: "Normal", style: "normal" },
+          { path: "b.woff2", weight: "bold", style: "normal" },
+        ],
+      },
+    });
+    expect(files.map((file) => file.weight)).toEqual([400, 700]);
+  });
+
+  it("rejects another keyword in a list entry", async () => {
+    const { dir, root } = await tempRoot();
+    await writeFile(join(dir, "a.woff2"), "");
+    const error = await rejection(
+      findSources({
+        ...base,
+        root,
+        options: { src: [{ path: "a.woff2", weight: "bolder", style: "normal" }] },
+      }),
+    );
+    expect(error.message).toContain('"bolder"');
   });
 
   it("resolves a string relative to the root", async () => {

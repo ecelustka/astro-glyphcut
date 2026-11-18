@@ -1,9 +1,12 @@
-import { glyphcut } from "astro-glyphcut";
-import type { FamilyOptions, SrcOption, TextOptions } from "astro-glyphcut";
+import { glyphcut, GlyphcutError } from "astro-glyphcut";
+import type { FamilyOptions, GlyphcutOptions, SrcOption, TextOptions } from "astro-glyphcut";
 import { defineConfig } from "astro/config";
 
 const text: TextOptions = { ascii: true, extra: "→" };
-const provider = glyphcut({ text });
+const options: GlyphcutOptions = { text };
+const provider = glyphcut(options);
+const error: Error = new GlyphcutError("x");
+void error;
 
 const single: SrcOption = "./fonts/a.woff2";
 const perStyle: SrcOption = { normal: "./fonts/a.woff2", italic: "./fonts/a-italic.woff2" };

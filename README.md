@@ -12,7 +12,7 @@ In `astro.config.ts`:
 import { glyphcut } from "astro-glyphcut";
 import { defineConfig } from "astro/config";
 
-const cut = glyphcut({ text: { ascii: true, extra: "©«°±·»×‐–—‘’“”•…→− " } });
+const cut = glyphcut({ text: { ascii: true, extra: "©«°±·»×–—‘’“”•…− " } });
 
 export default defineConfig({
   fonts: [
@@ -65,11 +65,13 @@ src: { normal: "./fonts/Brand.ttf", italic: "./fonts/Brand-Italic.ttf" } // keys
 src: [{ path: "./fonts/Brand-Bold.otf", weight: "700", style: "normal" }] // static files
 ```
 
-Weights and styles come from the Astro `weights` and `styles`. A variable font is clamped to the lowest and highest weight (one weight pins it), and a static file keeps its own weight. Astro's `styles` default to normal and italic, so each listed style needs a source. In the list form only files with a weight inside the range and a style in `styles` are used.
+Weights and styles come from the Astro `weights` and `styles`. A variable font is clamped to the lowest and highest weight (one weight pins it), and a static file keeps its own weight. Weights are numbers, `"normal"` (400) or `"bold"` (700). Astro's `styles` default to normal and italic, so each listed style needs a source. In the list form only files with a weight inside the range and a style in `styles` are used.
+
+Astro's `subsets` and `formats` family fields are ignored. Use `options.subset` to pick a Fontsource subset. The output is always woff2.
 
 ## Errors and warnings
 
-A Fontsource package that is not installed, a missing file, style or feature, a file without a weight when `weights` is a range, or both or neither of `fontsource` and `src` stops the build. A character the font lacks only logs a warning, prefixed with `[glyphcut]`, and the browser uses the fallback font for it.
+A Fontsource package that is not installed, a missing file, style or feature, a static file without a weight when `weights` is a range, an unknown weight keyword, or both or neither of `fontsource` and `src` is an error. The error is logged with the `[glyphcut]` prefix and `astro build` exits with code 1. `astro dev` keeps running without that font. A character the font lacks only logs a warning, prefixed with `[glyphcut]`, and the browser uses the fallback font for it.
 
 ## Cache
 

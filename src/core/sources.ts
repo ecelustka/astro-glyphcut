@@ -30,17 +30,31 @@ export type FindSourcesInput = {
 
 const STATIC_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
+const WEIGHT_KEYWORDS: Record<string, number> = { normal: 400, bold: 700 };
+
+function weightNumber(part: string): number {
+  const keyword = WEIGHT_KEYWORDS[part.toLowerCase()];
+  if (keyword !== undefined) return keyword;
+  const value = Number(part);
+  if (part === "" || !Number.isFinite(value)) {
+    throw new GlyphcutError(
+      `Font weight "${part}" is not a number. Use a number such as 400, or "normal" or "bold".`,
+    );
+  }
+  return value;
+}
+
 function weightNumbers(weights: Array<string | number>): number[] {
-  return weights.flatMap((weight) =>
-    String(weight)
-      .trim()
-      .split(/\s+/)
-      .map((part) => Number(part)),
-  );
+  return weights.flatMap((weight) => String(weight).trim().split(/\s+/).map(weightNumber));
+}
+
+/** Astro's default styles are normal and italic. A family without italic must say so. */
+function styleHint(style: Style): string {
+  return style === "normal" ? "" : ` If the font has no ${style} style, set styles: ["normal"].`;
 }
 
 export function weightRange(weights: Array<string | number>): { min: number; max: number } {
-  const numbers = weightNumbers(weights).filter((n) => Number.isFinite(n));
+  const numbers = weightNumbers(weights);
   if (numbers.length === 0) {
     throw new GlyphcutError(`No usable font weight in ${JSON.stringify(weights)}.`);
   }
@@ -79,7 +93,7 @@ async function fromFontsource(input: FindSourcesInput, id: string): Promise<Sour
       const path = join(variableDir, "files", `${id}-${subsetName}-wght-${style}.woff2`);
       if (!(await exists(path))) {
         throw new GlyphcutError(
-          `@fontsource-variable/${id} has no ${style} style for subset ${subsetName}. Expected ${path}.`,
+          `@fontsource-variable/${id} has no ${style} style for subset ${subsetName}. Expected ${path}.${styleHint(style)}`,
         );
       }
       files.push({ path, style, variable: true });
@@ -112,13 +126,13 @@ async function fromFontsource(input: FindSourcesInput, id: string): Promise<Sour
         found++;
       } else if (!isRange) {
         throw new GlyphcutError(
-          `@fontsource/${id} has no ${weight} ${style} file for subset ${subsetName}. Expected ${path}.`,
+          `@fontsource/${id} has no ${weight} ${style} file for subset ${subsetName}. Expected ${path}.${styleHint(style)}`,
         );
       }
     }
     if (found === 0) {
       throw new GlyphcutError(
-        `@fontsource/${id} has no ${style} files for weights ${wanted.join(", ")} in subset ${subsetName}.`,
+        `@fontsource/${id} has no ${style} files for weights ${wanted.join(", ")} in subset ${subsetName}.${styleHint(style)}`,
       );
     }
   }
@@ -152,7 +166,7 @@ async function fromSrc(input: FindSourcesInput, src: SrcOption): Promise<SourceF
     const files: SourceFile[] = [];
     for (const style of styles) {
       const matches = src.filter((entry) => {
-        const weight = Number(entry.weight);
+        const weight = weightNumber(String(entry.weight).trim());
         return entry.style === style && weight >= range.min && weight <= range.max;
       });
       if (matches.length === 0) {
@@ -161,7 +175,9 @@ async function fromSrc(input: FindSourcesInput, src: SrcOption): Promise<SourceF
         );
       }
       for (const entry of matches) {
-        files.push(await checked(abs(entry.path), style, Number(entry.weight)));
+        files.push(
+          await checked(abs(entry.path), style, weightNumber(String(entry.weight).trim())),
+        );
       }
     }
     return files;

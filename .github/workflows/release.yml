@@ -33,7 +33,11 @@ jobs:
 
   publish:
     needs: version
-    if: needs.version.outputs.has-changesets == 'false'
+    # Publish only on the merge of the version PR. Its commit message starts with the
+    # commit-message input above (a squash merge adds " (#N)").
+    if: >-
+      needs.version.outputs.has-changesets == 'false' &&
+      startsWith(github.event.head_commit.message, 'chore: version packages')
     runs-on: ubuntu-latest
     environment: npm
     permissions:

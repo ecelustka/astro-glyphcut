@@ -1,7 +1,7 @@
 import { mkdtemp, readdir, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { describe, expect, test, vi } from "vitest";
 
@@ -27,6 +27,14 @@ async function setup() {
   await writeFile(path, await fontsourceFile(pkg, file));
   const source: SourceFile = { path, style: "normal", variable: false };
   return { dir, url, source };
+}
+
+/** A cache file and sidecar from an earlier build, which this process did not return. */
+async function staleFile(dir: URL, label: string): Promise<string> {
+  const path = join(fileURLToPath(dir), `${label}-0123456789ab.woff2`);
+  await writeFile(path, "x");
+  await writeFile(`${path}.json`, "{}");
+  return path;
 }
 
 const exists = (path: string) =>
@@ -94,63 +102,61 @@ describe("cachedSubset", () => {
     expect(subset).toHaveBeenCalledTimes(1);
   });
 
-  test("a changed input makes a new file and deletes the old one", async () => {
+  test("a changed input makes a new file and deletes an old one from an earlier build", async () => {
     const { url, source } = await setup();
     const input = { dir: url, family: "Schibsted Grotesk", source, glyphs: "abc" };
-    const first = await cachedSubset(input);
+    const old = await staleFile(url, "schibsted-grotesk-normal");
     const second = await cachedSubset({ ...input, glyphs: "abcd" });
-    expect(second.path).not.toBe(first.path);
+    expect(second.path).not.toBe(old);
     expect(await exists(second.path)).toBe(true);
-    expect(await exists(first.path)).toBe(false);
-    expect(await exists(`${first.path}.json`)).toBe(false);
+    expect(await exists(old)).toBe(false);
+    expect(await exists(`${old}.json`)).toBe(false);
+  });
+
+  test("keeps every file this process returned, also with the same family and style", async () => {
+    const { url, source } = await setup();
+    const input = { dir: url, family: "Schibsted Grotesk", source, glyphs: "abc" };
+    const light = await cachedSubset({ ...input, weight: { min: 300, max: 300 } });
+    const bold = await cachedSubset({ ...input, weight: { min: 700, max: 700 } });
+    expect(bold.path).not.toBe(light.path);
+    expect(await exists(light.path)).toBe(true);
+    expect(await exists(bold.path)).toBe(true);
   });
 
   test("cleanup keeps other families", async () => {
     const { dir, url, source } = await setup();
-    const a = { dir: url, family: "Schibsted Grotesk", source, glyphs: "abc" };
-    const b = { dir: url, family: "Other", source, glyphs: "abc" };
-    const other = await cachedSubset(b);
-    await cachedSubset(a);
-    await cachedSubset({ ...a, glyphs: "abcd" });
-    expect(await exists(other.path)).toBe(true);
+    const other = await staleFile(url, "other-normal");
+    await staleFile(url, "schibsted-grotesk-normal");
+    await cachedSubset({ dir: url, family: "Schibsted Grotesk", source, glyphs: "abc" });
+    expect(await exists(other)).toBe(true);
     expect((await readdir(dir)).filter((name) => name.endsWith(".woff2"))).toHaveLength(3);
   });
 
   test("cleanup keeps a family whose name starts with the same text", async () => {
     const { url, source } = await setup();
-    const display = await cachedSubset({
-      dir: url,
-      family: "Inter Display",
-      source,
-      glyphs: "abc",
-    });
-    const plain = { dir: url, family: "Inter", source, glyphs: "abc" };
-    await cachedSubset(plain);
-    await cachedSubset({ ...plain, glyphs: "abcd" });
-    expect(await exists(display.path)).toBe(true);
+    const display = await staleFile(url, "inter-display-normal");
+    await cachedSubset({ dir: url, family: "Inter", source, glyphs: "abc" });
+    expect(await exists(display)).toBe(true);
   });
 
   test("cleanup removes leftover temp files of the same font", async () => {
     const { dir, url, source } = await setup();
-    const input = { dir: url, family: "Inter", source, glyphs: "abc" };
-    const first = await cachedSubset(input);
-    const leftover = `${first.path}.tmp-99999`;
-    const foreign = join(dir, "inter-display-normal-0123456789ab.woff2.tmp-1");
-    await writeFile(leftover, "x");
-    await writeFile(foreign, "x");
-    await cachedSubset({ ...input, glyphs: "abcd" });
-    expect(await exists(leftover)).toBe(false);
+    const old = await staleFile(url, "inter-normal");
+    const leftovers = [`${old}.tmp-99999`, `${old}.tmp-99999-0123abcd`];
+    const foreign = join(dir, "inter-display-normal-0123456789ab.woff2.tmp-1-0123abcd");
+    for (const path of [...leftovers, foreign]) await writeFile(path, "x");
+    await cachedSubset({ dir: url, family: "Inter", source, glyphs: "abc" });
+    for (const path of leftovers) expect(await exists(path)).toBe(false);
     expect(await exists(foreign)).toBe(true);
   });
 
   test("cleanup keeps other weights and styles", async () => {
     const { url, source } = await setup();
-    const input = { dir: url, family: "Inter", source, glyphs: "abc" };
-    const w400 = await cachedSubset({ ...input, source: { ...source, weight: 400 } });
-    const italic = await cachedSubset({ ...input, source: { ...source, style: "italic" } });
-    await cachedSubset({ ...input, glyphs: "abcd" });
-    expect(await exists(w400.path)).toBe(true);
-    expect(await exists(italic.path)).toBe(true);
+    const w400 = await staleFile(url, "inter-normal-400");
+    const italic = await staleFile(url, "inter-italic");
+    await cachedSubset({ dir: url, family: "Inter", source, glyphs: "abc" });
+    expect(await exists(w400)).toBe(true);
+    expect(await exists(italic)).toBe(true);
   });
 
   test("missing glyphs and variable come back on a cache hit", async () => {

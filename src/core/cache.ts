@@ -1,5 +1,5 @@
-import { createHash } from "node:crypto";
-import { mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { createHash, randomBytes } from "node:crypto";
+import { access, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -82,7 +82,7 @@ async function readSidecar(path: string): Promise<Sidecar | undefined> {
 }
 
 async function writeAtomic(path: string, data: string | Uint8Array): Promise<void> {
-  const temp = `${path}.tmp-${process.pid}`;
+  const temp = `${path}.tmp-${process.pid}-${randomBytes(4).toString("hex")}`;
   try {
     await writeFile(temp, data);
     await rename(temp, path);
@@ -92,13 +92,20 @@ async function writeAtomic(path: string, data: string | Uint8Array): Promise<voi
   }
 }
 
+// File names that cachedSubset returned in this process. Two fonts entries can share a prefix
+// (same family and style, other weights or features), so cleanup must not delete these files.
+const used = new Set<string>();
+
 // Match the exact name: prefix, 12 hex characters, then the extension.
 // A longer family name with the same start does not match.
-async function removeStale(dir: string, prefix: string, keep: string): Promise<void> {
+async function removeStale(dir: string, prefix: string): Promise<void> {
   const escaped = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const pattern = new RegExp(`^${escaped}[0-9a-f]{12}\\.woff2(\\.json)?(\\.tmp-\\d+)?$`);
+  const pattern = new RegExp(
+    `^(${escaped}[0-9a-f]{12}\\.woff2)(\\.json)?(\\.tmp-\\d+(-[0-9a-f]+)?)?$`,
+  );
   for (const name of await readdir(dir)) {
-    if (pattern.test(name) && name !== keep && name !== `${keep}.json`) {
+    const match = pattern.exec(name);
+    if (match && !used.has(match[1] ?? "")) {
       await rm(join(dir, name), { force: true });
     }
   }
@@ -123,7 +130,8 @@ export async function cachedSubset(input: CachedSubsetInput): Promise<CachedSubs
   const cached = await readSidecar(path);
   if (cached) {
     try {
-      await readFile(path);
+      await access(path);
+      used.add(name);
       return { path, created: false, ...cached };
     } catch {
       // The font file is gone: build it again.
@@ -136,7 +144,8 @@ export async function cachedSubset(input: CachedSubsetInput): Promise<CachedSubs
     `${path}.json`,
     JSON.stringify({ missing: result.missing, variable: result.variable }),
   );
-  await removeStale(dir, filePrefix(family, source.style, source.weight), name);
+  used.add(name);
+  await removeStale(dir, filePrefix(family, source.style, source.weight));
   return {
     path,
     created: true,
