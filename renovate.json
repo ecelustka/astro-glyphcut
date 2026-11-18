@@ -1,18 +1,60 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["config:best-practices", ":semanticCommits", ":disableDependencyDashboard"],
+  "ignorePresets": [":pinDevDependencies"],
+  "timezone": "Europe/Prague",
+  "schedule": ["* 0-5 * * 1"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "automerge": true,
+    "automergeType": "branch"
+  },
   "packageRules": [
-    {
-      "groupName": "oxc",
-      "matchPackageNames": ["oxlint", "oxlint-tsgolint", "oxfmt"]
-    },
     {
       "matchDepTypes": ["devDependencies"],
       "rangeStrategy": "bump"
     },
     {
-      "matchDepTypes": ["dependencies", "peerDependencies"],
-      "rangeStrategy": "replace"
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "matchCurrentVersion": "!/^0/",
+      "groupName": "dev dependencies",
+      "automerge": true,
+      "automergeType": "branch"
+    },
+    {
+      "description": "Runtime deps ship to users, review them and add a changeset",
+      "matchDepTypes": ["dependencies"],
+      "rangeStrategy": "replace",
+      "labels": ["needs-changeset"]
+    },
+    {
+      "description": "Peer and engine ranges are the public contract, change them by hand",
+      "matchDepTypes": ["peerDependencies", "engines"],
+      "enabled": false
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["pinDigest", "digest"],
+      "automerge": true,
+      "automergeType": "branch"
+    },
+    {
+      "description": "Keep @types/node on the lowest supported Node major",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<23"
+    },
+    {
+      "matchPackageNames": ["@changesets/**"],
+      "groupName": "changesets"
+    },
+    {
+      "matchPackageNames": ["@fontsource/**", "@fontsource-variable/**"],
+      "groupName": "fontsource"
+    },
+    {
+      "matchPackageNames": ["oxlint", "oxlint-tsgolint", "oxfmt"],
+      "groupName": "oxc"
     }
   ]
 }
