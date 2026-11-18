@@ -39,7 +39,8 @@
   },
   "dependencies": {
     "fontverter": "^2.0.0",
-    "harfbuzzjs": "^1.6.1"
+    "harfbuzzjs": "^1.6.1",
+    "subset-font": "^2.9.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

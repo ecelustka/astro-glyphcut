@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 
-import { fontsourceFile } from "../../test/helpers/fonts.ts";
+import { fontsourceFile } from "./fonts.test-utils.ts";
 import { inspectFont } from "./inspect.ts";
 
 test("reads the Schibsted Grotesk variable latin file", async () => {
