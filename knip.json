@@ -1,9 +1,14 @@
 {
-  "entry": ["src/index.ts", "src/**/*.test.ts", "test/**/*.test.ts"],
-  "project": ["src/**/*.ts", "test/**/*.ts"],
-  "ignoreDependencies": [
-    "@fontsource-variable/jetbrains-mono",
-    "@fontsource-variable/schibsted-grotesk",
-    "@fontsource/jetbrains-mono"
-  ]
+  "ignoreWorkspaces": ["test/fixtures/*"],
+  "workspaces": {
+    ".": {
+      "entry": ["src/index.ts", "src/**/*.test.ts", "test/**/*.test.ts"],
+      "project": ["src/**/*.ts", "test/e2e/**/*.ts"],
+      "ignoreDependencies": [
+        "@fontsource-variable/jetbrains-mono",
+        "@fontsource-variable/schibsted-grotesk",
+        "@fontsource/jetbrains-mono"
+      ]
+    }
+  }
 }

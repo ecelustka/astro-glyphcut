@@ -1,0 +1,11 @@
+{
+  "name": "glyphcut-fixture-basic",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@fontsource-variable/schibsted-grotesk": "^5.3.0",
+    "astro": "^7.4.12",
+    "astro-glyphcut": "workspace:*"
+  }
+}
