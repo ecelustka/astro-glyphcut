@@ -126,12 +126,13 @@ export async function cachedSubset(input: CachedSubsetInput): Promise<CachedSubs
   });
   const name = cacheFileName(family, source.style, source.weight, key);
   const path = join(dir, name);
+  // Claim the name before any write, so a sibling entry's cleanup never deletes this file.
+  used.add(name);
 
   const cached = await readSidecar(path);
   if (cached) {
     try {
       await access(path);
-      used.add(name);
       return { path, created: false, ...cached };
     } catch {
       // The font file is gone: build it again.
@@ -144,7 +145,6 @@ export async function cachedSubset(input: CachedSubsetInput): Promise<CachedSubs
     `${path}.json`,
     JSON.stringify({ missing: result.missing, variable: result.variable }),
   );
-  used.add(name);
   await removeStale(dir, filePrefix(family, source.style, source.weight));
   return {
     path,

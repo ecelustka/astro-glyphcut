@@ -123,6 +123,15 @@ describe("cachedSubset", () => {
     expect(await exists(bold.path)).toBe(true);
   });
 
+  test("keeps the files of entries that resolve at the same time", async () => {
+    const { url, source } = await setup();
+    const input = { dir: url, family: "Schibsted Grotesk", source, glyphs: "abc" };
+    const results = await Promise.all(
+      [300, 400, 500, 600, 700].map((w) => cachedSubset({ ...input, weight: { min: w, max: w } })),
+    );
+    for (const { path } of results) expect(await exists(path)).toBe(true);
+  });
+
   test("cleanup keeps other families", async () => {
     const { dir, url, source } = await setup();
     const other = await staleFile(url, "other-normal");
