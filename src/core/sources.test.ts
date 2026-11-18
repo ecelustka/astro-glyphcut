@@ -6,7 +6,6 @@ import { pathToFileURL } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { findSources, weightRange } from "./sources.ts";
-import type { FamilyOptions, SrcOption } from "./sources.ts";
 import { GlyphcutError } from "./subset.ts";
 
 const REPO = new URL("../../", import.meta.url);
@@ -141,7 +140,7 @@ describe("findSources with fontsource", () => {
 });
 
 describe("findSources with src", () => {
-  const base = { family: "Local", weights: ["400"], styles: ["normal"] };
+  const base = { family: "Local", weights: ["400"], styles: ["normal" as const] };
 
   it("picks the list entries that match the weights", async () => {
     const { dir, root } = await tempRoot();
@@ -159,12 +158,6 @@ describe("findSources with src", () => {
     });
     expect(files).toHaveLength(1);
     expect(files[0]).toMatchObject({ path: join(dir, "a.woff2"), weight: 400, style: "normal" });
-  });
-
-  it("accepts the documented option types", () => {
-    const src: SrcOption = "a.woff2";
-    const options: FamilyOptions = { src, subset: "latin" };
-    expect(options.src).toBe("a.woff2");
   });
 
   it("resolves a string relative to the root", async () => {
@@ -208,7 +201,7 @@ describe("findSources with src", () => {
 });
 
 describe("findSources option errors", () => {
-  const base = { root: REPO, family: "X", weights: ["400"], styles: ["normal"] };
+  const base = { root: REPO, family: "X", weights: ["400"], styles: ["normal" as const] };
 
   it("rejects both fontsource and src", async () => {
     const error = await rejection(

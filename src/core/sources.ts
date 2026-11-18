@@ -18,14 +18,14 @@ export type FamilyOptions = {
   subset?: string;
 };
 
-export type SourceFile = { path: string; style: string; weight?: number; variable: boolean };
+export type SourceFile = { path: string; style: Style; weight?: number; variable: boolean };
 
 export type FindSourcesInput = {
   root: URL;
   family: string;
   options: FamilyOptions;
   weights: Array<string | number>;
-  styles: string[];
+  styles: Style[];
 };
 
 const STATIC_WEIGHTS = [100, 200, 300, 400, 500, 600, 700, 800, 900];
@@ -125,7 +125,7 @@ async function fromFontsource(input: FindSourcesInput, id: string): Promise<Sour
   return files;
 }
 
-async function checked(path: string, style: string, weight?: number): Promise<SourceFile> {
+async function checked(path: string, style: Style, weight?: number): Promise<SourceFile> {
   if (!(await exists(path))) {
     throw new GlyphcutError(`Font file not found: ${path}`);
   }
@@ -169,7 +169,7 @@ async function fromSrc(input: FindSourcesInput, src: SrcOption): Promise<SourceF
 
   const files: SourceFile[] = [];
   for (const style of styles) {
-    const path = src[style as Style];
+    const path = src[style];
     if (!path) {
       throw new GlyphcutError(
         `src for ${family} has no ${style} style. It has: ${Object.keys(src).join(", ")}.`,

@@ -25,15 +25,20 @@ export function cacheKey(parts: CacheKeyParts): string {
   return hash.digest("hex").slice(0, 12);
 }
 
-function kebab(family: string): string {
+export function kebab(family: string): string {
   return family
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
 
+/** The readable part of a cache file name: `schibsted-grotesk-normal` or `...-normal-700`. */
+export function cacheLabel(family: string, style: string, weight?: number): string {
+  return `${kebab(family)}-${style}${weight === undefined ? "" : `-${weight}`}`;
+}
+
 function filePrefix(family: string, style: string, weight: number | undefined): string {
-  return `${kebab(family)}-${style}-${weight === undefined ? "" : `${weight}-`}`;
+  return `${cacheLabel(family, style, weight)}-`;
 }
 
 export function cacheFileName(
