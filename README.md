@@ -5,7 +5,7 @@
 An Astro font provider that subsets fonts to the glyphs your site uses, at build time. Astro's Google provider has an `experimental.glyphs` option too, but only for Google fonts, and without control over OpenType features or the weight axis.
 
 ```sh
-pnpm add astro-glyphcut
+pnpm add -D astro-glyphcut
 ```
 
 In `astro.config.ts`:
