@@ -1,6 +1,6 @@
 import type { FontProvider } from "astro";
 
-import { cachedSubset, cacheLabel, kebab } from "./core/cache.ts";
+import { cachedSubset, cacheLabel, cacheUrl, kebab } from "./core/cache.ts";
 import { findSources, weightRange } from "./core/sources.ts";
 import type { FamilyOptions, SourceFile } from "./core/sources.ts";
 import { GlyphcutError } from "./core/subset.ts";
@@ -32,7 +32,7 @@ function fontWeight(
   );
 }
 
-export type GlyphcutOptions = { text: TextOptions };
+export type GlyphcutOptions = { text: TextOptions; cacheDir?: string };
 
 /** Keep exit code 1, also after a process.exit(0). */
 function keepFailure(): void {
@@ -94,7 +94,7 @@ export function glyphcut(options: GlyphcutOptions): FontProvider<FamilyOptions> 
     options: familyOptions,
   }: Parameters<FontProvider<FamilyOptions>["resolveFont"]>[0]) {
     if (!root) throw new GlyphcutError("The glyphcut provider was used before init.");
-    const dir = new URL("node_modules/.astro/glyphcut/", root);
+    const dir = cacheUrl(root, options.cacheDir);
     const range = weightRange(weights);
     const family = kebab(familyName);
 

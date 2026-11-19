@@ -5,10 +5,10 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { describe, expect, test, vi } from "vitest";
 
-import { cacheFileName, cacheKey, cachedSubset } from "./cache.ts";
+import { cacheFileName, cacheKey, cachedSubset, cacheUrl } from "./cache.ts";
 import { fontsourceFile } from "./fonts.test-utils.ts";
 import type { SourceFile } from "./sources.ts";
-import { subset } from "./subset.ts";
+import { GlyphcutError, subset } from "./subset.ts";
 import type * as SubsetModule from "./subset.ts";
 import { engineVersions } from "./versions.ts";
 
@@ -42,6 +42,30 @@ const exists = (path: string) =>
     () => true,
     () => false,
   );
+
+describe("cacheUrl", () => {
+  const root = pathToFileURL(`${tmpdir()}/`);
+
+  test("defaults to node_modules/.astro/glyphcut", () => {
+    expect(cacheUrl(root).href).toBe(new URL("node_modules/.astro/glyphcut/", root).href);
+  });
+
+  test("resolves a relative folder against the root, with one end slash", () => {
+    const expected = new URL(".cache/fonts/", root).href;
+    expect(cacheUrl(root, ".cache/fonts").href).toBe(expected);
+    expect(cacheUrl(root, ".cache/fonts/").href).toBe(expected);
+  });
+
+  test("uses an absolute folder as is", async () => {
+    const other = await mkdtemp(join(tmpdir(), "glyphcut-other-"));
+    expect(cacheUrl(root, other).href).toBe(pathToFileURL(`${other}/`).href);
+  });
+
+  test("throws on an empty folder", () => {
+    expect(() => cacheUrl(root, "")).toThrow(GlyphcutError);
+    expect(() => cacheUrl(root, "")).toThrow("cacheDir must not be empty.");
+  });
+});
 
 describe("cacheFileName", () => {
   test("uses the kebab case family, style, optional weight and key", () => {

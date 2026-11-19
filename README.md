@@ -45,12 +45,13 @@ export default defineConfig({
 
 ## Options
 
-`glyphcut({ text })` sets one glyph set for every family that uses it. The glyph set also becomes the `unicode-range`.
+`glyphcut()` options. `text` sets one glyph set for every family that uses it. The glyph set also becomes the `unicode-range`.
 
-| Option       | Type    | Default | What it does                            |
-| ------------ | ------- | ------- | --------------------------------------- |
-| `text.ascii` | boolean | `false` | Adds U+0020 to U+007E.                  |
-| `text.extra` | string  | `""`    | Adds these characters to the glyph set. |
+| Option       | Type    | Default                            | What it does                                               |
+| ------------ | ------- | ---------------------------------- | ---------------------------------------------------------- |
+| `text.ascii` | boolean | `false`                            | Adds U+0020 to U+007E.                                     |
+| `text.extra` | string  | `""`                               | Adds these characters to the glyph set.                    |
+| `cacheDir`   | string  | `"./node_modules/.astro/glyphcut"` | Folder for the subset files. Relative to the project root. |
 
 Per-family `options`. Set `fontsource` or `src`, not both.
 
@@ -77,7 +78,7 @@ A Fontsource package that is not installed, a missing file, style or feature, a 
 
 ## Cache
 
-Subsets go to `node_modules/.astro/glyphcut/` and are rebuilt when the font, options or engine versions change. Delete the folder to clear it. On Netlify, add `node_modules/.astro` to the cache.
+Subsets go to `node_modules/.astro/glyphcut/` and are rebuilt when the font, options or engine versions change. Delete the folder to clear it. The `cacheDir` option moves the folder. Astro's own `cacheDir` does not. On Netlify, add `node_modules/.astro` to the cache.
 
 ## Requirements
 

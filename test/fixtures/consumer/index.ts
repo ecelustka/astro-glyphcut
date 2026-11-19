@@ -5,6 +5,7 @@ import { defineConfig } from "astro/config";
 const text: TextOptions = { ascii: true, extra: "→" };
 const options: GlyphcutOptions = { text };
 const provider = glyphcut(options);
+glyphcut({ text, cacheDir: "./.cache/glyphcut" });
 const error: Error = new GlyphcutError("x");
 void error;
 
@@ -36,3 +37,6 @@ defineConfig({
 
 // @ts-expect-error ascii must be a boolean
 glyphcut({ text: { ascii: "yes" } });
+
+// @ts-expect-error cacheDir must be a string
+glyphcut({ text, cacheDir: 1 });
