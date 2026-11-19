@@ -11,7 +11,7 @@ pnpm add -D astro-glyphcut
 In `astro.config.ts`:
 
 ```ts
-import { glyphcut } from "astro-glyphcut";
+import { glyphcut, glyphcutCheck } from "astro-glyphcut";
 import { defineConfig } from "astro/config";
 
 const cut = glyphcut({ text: { ascii: true, extra: "©«°±·»×–—‘’“”•…− " } });
@@ -19,7 +19,7 @@ const cut = glyphcut({ text: { ascii: true, extra: "©«°±·»×–—‘’�
 export default defineConfig({
   fonts: [
     {
-      provider: cut.provider,
+      provider: cut,
       name: "Schibsted Grotesk",
       cssVariable: "--font-schibsted-grotesk",
       weights: ["400 800"],
@@ -27,7 +27,7 @@ export default defineConfig({
       options: { fontsource: "schibsted-grotesk", features: ["kern", "liga", "tnum"] },
     },
     {
-      provider: cut.provider,
+      provider: cut,
       name: "Brand",
       cssVariable: "--font-brand",
       weights: ["400", "700"],
@@ -40,7 +40,7 @@ export default defineConfig({
       },
     },
   ],
-  integrations: [cut.check()],
+  integrations: [glyphcutCheck(cut)],
 });
 ```
 
@@ -79,7 +79,7 @@ A Fontsource package that is not installed, a missing file, style or feature, a 
 
 ## Check the pages
 
-`cut.check()` is an Astro integration. After `astro build` it reads every `.html` file in the output and warns about each character that is not in the glyph set:
+`glyphcutCheck(cut)` is an Astro integration. After `astro build` it reads every `.html` file in the output and warns about each character that is not in the glyph set:
 
 ```
 [WARN] [glyphcut] "ž" (U+017E) is not in the glyph set: blog/a/index.html, uses/index.html and 3 more
@@ -87,11 +87,7 @@ A Fontsource package that is not installed, a missing file, style or feature, a 
 
 It reads text nodes and `alt` and `placeholder` values. It skips `head`, `script`, `style`, `template`, comments, `title` and `aria-label` attributes, and control characters. It does not run in `astro dev`, and it does not see pages rendered on request or text that JavaScript adds in the browser.
 
-With `cut.check({ strict: true })`, `astro build` exits with code 1 when a character is missing.
-
-## Upgrade from 0.1
-
-`glyphcut()` now returns `{ provider, check }`. Set `const cut = glyphcut(...)`, then change `provider: glyphcut(...)` or `provider: cut` to `provider: cut.provider`. The old form fails with "Invalid FontProvider object".
+With `glyphcutCheck(cut, { strict: true })`, `astro build` exits with code 1 when a character is missing.
 
 ## Cache
 

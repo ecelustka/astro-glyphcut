@@ -2,16 +2,29 @@ import { readdir, readFile } from "node:fs/promises";
 import { join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import type { AstroIntegration } from "astro";
+import type { AstroIntegration, FontProvider } from "astro";
 
 import { missingCodePoints, pageCodePoints } from "./core/scan.ts";
+import type { FamilyOptions } from "./core/sources.ts";
 import { GlyphcutError } from "./core/subset.ts";
-import { formatPoint } from "./core/text.ts";
+import { formatPoint, glyphSet } from "./core/text.ts";
+import type { TextOptions } from "./core/text.ts";
 
 export type CheckOptions = { strict?: boolean };
 
-/** Warns about page characters that are not in the glyph set. */
-export function checkIntegration(glyphs: string, options: CheckOptions = {}): AstroIntegration {
+/** Warns about page characters that are not in the glyph set of `provider`. */
+export function glyphcutCheck(
+  provider: FontProvider<FamilyOptions>,
+  options?: CheckOptions,
+): AstroIntegration {
+  const text = provider.config?.["text"] as TextOptions | undefined;
+  if (provider.name !== "glyphcut" || !text) {
+    throw new GlyphcutError("glyphcutCheck needs a provider from glyphcut().");
+  }
+  return checkIntegration(glyphSet(text), options);
+}
+
+function checkIntegration(glyphs: string, options: CheckOptions = {}): AstroIntegration {
   return {
     name: "glyphcut",
     hooks: {

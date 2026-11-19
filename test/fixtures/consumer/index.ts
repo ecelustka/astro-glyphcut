@@ -1,7 +1,7 @@
-import { glyphcut, GlyphcutError } from "astro-glyphcut";
+import { glyphcut, glyphcutCheck, GlyphcutError } from "astro-glyphcut";
 import type {
+  CheckOptions,
   FamilyOptions,
-  Glyphcut,
   GlyphcutOptions,
   SrcOption,
   TextOptions,
@@ -10,11 +10,9 @@ import { defineConfig } from "astro/config";
 
 const text: TextOptions = { ascii: true, extra: "→" };
 const options: GlyphcutOptions = { text };
-const cut = glyphcut(options);
-const provider = cut.provider;
-const g: Glyphcut = cut;
-void g;
+const provider = glyphcut(options);
 glyphcut({ text, cacheDir: "./.cache/glyphcut" });
+const strict: CheckOptions = { strict: true };
 const error: Error = new GlyphcutError("x");
 void error;
 
@@ -30,7 +28,7 @@ export default defineConfig({
     { provider, name: "C", cssVariable: "--font-c", options: { src: list } },
     { provider, name: "D", cssVariable: "--font-d", options: fromFontsource },
   ],
-  integrations: [cut.check({ strict: true })],
+  integrations: [glyphcutCheck(provider, strict)],
 });
 
 // Negative cases: each line must be a type error, so a lost FamilyOptions type fails the check.
@@ -42,8 +40,6 @@ defineConfig({
     { provider, name: "F", cssVariable: "--font-f", options: { fontsource: 1 } },
     // @ts-expect-error unknown option key
     { provider, name: "G", cssVariable: "--font-g", options: { fontsource: "x", nope: true } },
-    // @ts-expect-error the pair is not a provider
-    { provider: cut, name: "H", cssVariable: "--font-h", options: {} },
   ],
 });
 
@@ -54,4 +50,4 @@ glyphcut({ text: { ascii: "yes" } });
 glyphcut({ text, cacheDir: 1 });
 
 // @ts-expect-error strict must be a boolean
-cut.check({ strict: "yes" });
+glyphcutCheck(provider, { strict: "yes" });

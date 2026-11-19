@@ -5,9 +5,10 @@ import { pathToFileURL } from "node:url";
 
 import { afterEach, expect, test, vi } from "vitest";
 
-import { checkIntegration } from "./check.ts";
+import { glyphcutCheck } from "./check.ts";
 import type { CheckOptions } from "./check.ts";
 import { GlyphcutError } from "./core/subset.ts";
+import { glyphcut } from "./provider.ts";
 
 const dirs: string[] = [];
 
@@ -23,7 +24,9 @@ async function run(files: Record<string, string>, glyphs: string, options?: Chec
     await writeFile(join(dir, name), html);
   }
   const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), fork: () => logger };
-  const hook = checkIntegration(glyphs, options).hooks["astro:build:done"]!;
+  const hook = glyphcutCheck(glyphcut({ text: { extra: glyphs } }), options).hooks[
+    "astro:build:done"
+  ]!;
   const done = hook({ dir: pathToFileURL(`${dir}/`), logger } as never);
   return { done, logger };
 }
@@ -77,4 +80,17 @@ test("ignores files that are not HTML", async () => {
   await done;
   expect(logger.warn).not.toHaveBeenCalled();
   expect(logger.info.mock.calls).toEqual([["all characters of 1 page are in the glyph set"]]);
+});
+
+test("is an integration named glyphcut", () => {
+  const check = glyphcutCheck(glyphcut({ text: { ascii: true } }));
+  expect(check.name).toBe("glyphcut");
+  expect(check.hooks["astro:build:done"]).toBeTypeOf("function");
+});
+
+test("rejects a provider that glyphcut() did not make", () => {
+  const other = { name: "other", resolveFont: async () => undefined };
+  expect(() => glyphcutCheck(other)).toThrow(
+    new GlyphcutError("glyphcutCheck needs a provider from glyphcut()."),
+  );
 });
