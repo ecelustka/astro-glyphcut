@@ -82,7 +82,7 @@ A Fontsource package that is not installed, a missing file, style or feature, a 
 `glyphcutCheck(cut)` is an Astro integration. After `astro build` it reads every `.html` file in the output and warns about each character that is not in the glyph set:
 
 ```
-[WARN] [glyphcut] "ž" (U+017E) is not in the glyph set: blog/a/index.html, uses/index.html and 3 more
+[WARN] [glyphcut] "€" (U+20AC) is not in the glyph set: about/index.html, pricing/index.html and 3 more
 ```
 
 It reads text nodes and `alt` and `placeholder` values. It skips `head`, `script`, `style`, `template`, comments, `title` and `aria-label` attributes, and control characters. It does not run in `astro dev`, and it does not see pages rendered on request or text that JavaScript adds in the browser.
