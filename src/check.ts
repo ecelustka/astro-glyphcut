@@ -1,0 +1,47 @@
+import { readdir, readFile } from "node:fs/promises";
+import { join, sep } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import type { AstroIntegration } from "astro";
+
+import { missingCodePoints, pageCodePoints } from "./core/scan.ts";
+import { GlyphcutError } from "./core/subset.ts";
+import { formatPoint } from "./core/text.ts";
+
+export type CheckOptions = { strict?: boolean };
+
+/** Warns about page characters that are not in the glyph set. */
+export function checkIntegration(glyphs: string, options: CheckOptions = {}): AstroIntegration {
+  return {
+    name: "glyphcut",
+    hooks: {
+      "astro:build:done": async ({ dir, logger }) => {
+        const root = fileURLToPath(dir);
+        const pages = new Map<string, Set<number>>();
+        for (const file of await readdir(root, { recursive: true })) {
+          if (!file.endsWith(".html")) continue;
+          pages.set(
+            file.split(sep).join("/"),
+            pageCodePoints(await readFile(join(root, file), "utf8")),
+          );
+        }
+
+        const missing = missingCodePoints(pages, glyphs);
+        if (missing.size === 0) {
+          logger.info(`all characters of ${pages.size} pages are in the glyph set`);
+          return;
+        }
+        for (const [point, names] of missing) {
+          const more = names.length > 2 ? ` and ${names.length - 2} more` : "";
+          logger.warn(
+            `"${String.fromCodePoint(point)}" (${formatPoint(point)}) is not in the glyph set: ${names.slice(0, 2).join(", ")}${more}`,
+          );
+        }
+        if (options.strict) {
+          const count = missing.size === 1 ? "1 character is" : `${missing.size} characters are`;
+          throw new GlyphcutError(`${count} not in the glyph set. See the warnings above.`);
+        }
+      },
+    },
+  };
+}

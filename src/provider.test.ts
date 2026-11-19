@@ -33,7 +33,7 @@ async function setup(text = {}): Promise<{
   provider: FontProvider<FamilyOptions>;
 }> {
   const { dir, root } = await tempRoot();
-  const provider = glyphcut({ text });
+  const provider = glyphcut({ text }).provider;
   await provider.init?.({ root } as Parameters<NonNullable<typeof provider.init>>[0]);
   return { dir, provider };
 }
@@ -75,7 +75,7 @@ afterEach(async () => {
 
 describe("glyphcut provider", () => {
   it("has a name and keeps its options as config", () => {
-    const provider = glyphcut({ text: { ascii: true } });
+    const provider = glyphcut({ text: { ascii: true } }).provider;
     expect(provider.name).toBe("glyphcut");
     expect(provider.config).toEqual({ text: { ascii: true } });
   });
@@ -83,7 +83,7 @@ describe("glyphcut provider", () => {
   it("writes the subsets to cacheDir", async () => {
     const { dir, root } = await tempRoot();
     const custom = join(dir, "custom-cache");
-    const provider = glyphcut({ text: {}, cacheDir: custom });
+    const provider = glyphcut({ text: {}, cacheDir: custom }).provider;
     await provider.init?.({ root } as Parameters<NonNullable<typeof provider.init>>[0]);
     const result = await resolve(provider, { fontsource: "schibsted-grotesk" });
     expect(result?.fonts.length).toBeGreaterThan(0);
@@ -91,6 +91,12 @@ describe("glyphcut provider", () => {
       expect(font.src[0]).toMatchObject({ url: expect.stringContaining(custom) });
     }
     expect(existsSync(join(dir, "node_modules/.astro/glyphcut"))).toBe(false);
+  });
+
+  it("has a check integration", () => {
+    const check = glyphcut({ text: { ascii: true } }).check();
+    expect(check.name).toBe("glyphcut");
+    expect(check.hooks["astro:build:done"]).toBeTypeOf("function");
   });
 
   it("returns one font for each style of a variable font", async () => {

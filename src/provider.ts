@@ -1,10 +1,12 @@
-import type { FontProvider } from "astro";
+import type { AstroIntegration, FontProvider } from "astro";
 
+import { checkIntegration } from "./check.ts";
+import type { CheckOptions } from "./check.ts";
 import { cachedSubset, cacheLabel, cacheUrl, kebab } from "./core/cache.ts";
 import { findSources, weightRange } from "./core/sources.ts";
 import type { FamilyOptions, SourceFile } from "./core/sources.ts";
 import { GlyphcutError } from "./core/subset.ts";
-import { glyphSet, unicodeRange } from "./core/text.ts";
+import { formatPoint, glyphSet, unicodeRange } from "./core/text.ts";
 import type { TextOptions } from "./core/text.ts";
 
 const PREFIX = "[glyphcut]";
@@ -12,10 +14,6 @@ const PREFIX = "[glyphcut]";
 /** 46752 becomes "46 752". */
 function groups(value: number): string {
   return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-}
-
-function formatPoint(point: number): string {
-  return `U+${point.toString(16).toUpperCase().padStart(4, "0")}`;
 }
 
 function fontWeight(
@@ -34,6 +32,11 @@ function fontWeight(
 
 export type GlyphcutOptions = { text: TextOptions; cacheDir?: string };
 
+export type Glyphcut = {
+  provider: FontProvider<FamilyOptions>;
+  check(options?: CheckOptions): AstroIntegration;
+};
+
 /** Keep exit code 1, also after a process.exit(0). */
 function keepFailure(): void {
   if (!process.exitCode) process.exitCode = 1;
@@ -51,7 +54,14 @@ function fail(): void {
   if (!process.listeners("exit").includes(keepFailure)) process.once("exit", keepFailure);
 }
 
-export function glyphcut(options: GlyphcutOptions): FontProvider<FamilyOptions> {
+export function glyphcut(options: GlyphcutOptions): Glyphcut {
+  return {
+    provider: fontProvider(options),
+    check: (checkOptions) => checkIntegration(glyphSet(options.text), checkOptions),
+  };
+}
+
+function fontProvider(options: GlyphcutOptions): FontProvider<FamilyOptions> {
   let root: URL | undefined;
   const glyphs = glyphSet(options.text);
   const ranges = unicodeRange(glyphs);

@@ -32,3 +32,8 @@ export function unicodeRange(glyphs: string): string[] {
   }
   return ranges;
 }
+
+/** 382 becomes "U+017E". */
+export function formatPoint(point: number): string {
+  return `U+${point.toString(16).toUpperCase().padStart(4, "0")}`;
+}

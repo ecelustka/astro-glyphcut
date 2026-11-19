@@ -44,9 +44,11 @@
     "release": "pnpm build && changeset publish"
   },
   "dependencies": {
+    "entities": "^9.0.0",
     "fontverter": "^2.0.0",
     "harfbuzzjs": "^1.6.1",
-    "subset-font": "^2.9.0"
+    "subset-font": "^2.9.0",
+    "ultrahtml": "^1.7.0"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

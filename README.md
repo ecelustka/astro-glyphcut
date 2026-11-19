@@ -19,7 +19,7 @@ const cut = glyphcut({ text: { ascii: true, extra: "©«°±·»×–—‘’�
 export default defineConfig({
   fonts: [
     {
-      provider: cut,
+      provider: cut.provider,
       name: "Schibsted Grotesk",
       cssVariable: "--font-schibsted-grotesk",
       weights: ["400 800"],
@@ -27,7 +27,7 @@ export default defineConfig({
       options: { fontsource: "schibsted-grotesk", features: ["kern", "liga", "tnum"] },
     },
     {
-      provider: cut,
+      provider: cut.provider,
       name: "Brand",
       cssVariable: "--font-brand",
       weights: ["400", "700"],
@@ -40,6 +40,7 @@ export default defineConfig({
       },
     },
   ],
+  integrations: [cut.check()],
 });
 ```
 
@@ -75,6 +76,22 @@ Astro's `subsets` and `formats` family fields are ignored. Use `options.subset` 
 ## Errors and warnings
 
 A Fontsource package that is not installed, a missing file, style or feature, a static file without a weight when `weights` is a range, an unknown weight keyword, or both or neither of `fontsource` and `src` is an error. The error is logged with the `[glyphcut]` prefix and `astro build` exits with code 1. `astro dev` keeps running without that font. A character the font lacks only logs a warning, prefixed with `[glyphcut]`, and the browser uses the fallback font for it.
+
+## Check the pages
+
+`cut.check()` is an Astro integration. After `astro build` it reads every `.html` file in the output and warns about each character that is not in the glyph set:
+
+```
+[WARN] [glyphcut] "ž" (U+017E) is not in the glyph set: blog/a/index.html, uses/index.html and 3 more
+```
+
+It reads text nodes and `alt` and `placeholder` values. It skips `head`, `script`, `style`, `template`, comments, `title` and `aria-label` attributes, and control characters. It does not run in `astro dev`, and it does not see pages rendered on request or text that JavaScript adds in the browser.
+
+With `cut.check({ strict: true })`, `astro build` also exits with code 1.
+
+## Upgrade from 0.1
+
+`glyphcut()` now returns `{ provider, check }`. Set `const cut = glyphcut(...)`, then change `provider: glyphcut(...)` or `provider: cut` to `provider: cut.provider`. The old form fails with "Invalid FontProvider object".
 
 ## Cache
 
