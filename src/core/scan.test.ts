@@ -17,6 +17,14 @@ test("counts alt and placeholder values", () => {
   expect(chars(pageCodePoints('<img alt="ž &amp; x"><input placeholder="ř">'))).toBe(" &xřž");
 });
 
+test("keeps a '>' inside a quoted attribute", () => {
+  expect(chars(pageCodePoints('<img src="/a.png" alt="ab -> cd"><p>xy</p>'))).toBe(" ->abcdxy");
+});
+
+test("counts an unquoted attribute", () => {
+  expect(chars(pageCodePoints("<img alt=ž>"))).toBe("ž");
+});
+
 test("skips head, script, style, template, comments, title, aria-label and control characters", () => {
   const html = [
     "<html><head><title>Ω</title></head><body>",

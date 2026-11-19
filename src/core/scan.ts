@@ -1,34 +1,29 @@
-import { decodeHTML } from "entities";
-import { ELEMENT_NODE, TEXT_NODE, parse, walkSync } from "ultrahtml";
-import type { Node } from "ultrahtml";
+import { parse } from "parse5";
+import type { DefaultTreeAdapterTypes } from "parse5";
 
 /** The browser does not draw this text with the page font. */
 const SKIP = new Set(["head", "script", "style", "template"]);
-const ATTRIBUTES = ["alt", "placeholder"];
-
-function skipped(node: Node | undefined): boolean {
-  for (; node; node = node.parent) {
-    if (node.type === ELEMENT_NODE && SKIP.has(node.name.toLowerCase())) return true;
-  }
-  return false;
-}
+const ATTRIBUTES = new Set(["alt", "placeholder"]);
 
 /** The code points that a page draws with its fonts, without control characters. */
 export function pageCodePoints(html: string): Set<number> {
   const points = new Set<number>();
-  const add = (raw: string) => {
-    for (const char of decodeHTML(raw)) {
+  const add = (text: string) => {
+    for (const char of text) {
       const point = char.codePointAt(0)!;
       if (point >= 0x20 && (point < 0x7f || point > 0x9f)) points.add(point);
     }
   };
-  walkSync(parse(html), (node) => {
-    if (node.type === TEXT_NODE) {
-      if (!skipped(node)) add(node.value);
-    } else if (node.type === ELEMENT_NODE && !skipped(node)) {
-      for (const name of ATTRIBUTES) if (node.attributes[name]) add(node.attributes[name]);
+  // parse5 decodes entities and lowercases tag names.
+  const walk = (node: DefaultTreeAdapterTypes.Node) => {
+    if (SKIP.has(node.nodeName)) return;
+    if (node.nodeName === "#text" && "value" in node) add(node.value);
+    if ("attrs" in node) {
+      for (const attr of node.attrs) if (ATTRIBUTES.has(attr.name)) add(attr.value);
     }
-  });
+    if ("childNodes" in node) node.childNodes.forEach(walk);
+  };
+  walk(parse(html));
   return points;
 }
 
