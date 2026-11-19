@@ -56,8 +56,8 @@ describe("cacheUrl", () => {
     expect(cacheUrl(root, ".cache/fonts/").href).toBe(expected);
   });
 
-  test("uses an absolute folder as is", async () => {
-    const other = await mkdtemp(join(tmpdir(), "glyphcut-other-"));
+  test("uses an absolute folder as is", () => {
+    const other = join(tmpdir(), "glyphcut-abs");
     expect(cacheUrl(root, other).href).toBe(pathToFileURL(`${other}/`).href);
   });
 
