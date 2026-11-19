@@ -10,8 +10,8 @@ const fixture = new URL("../fixtures/basic/", import.meta.url);
 const dist = fileURLToPath(new URL("dist/", fixture));
 let html = "";
 
-// Sizes of the celustka.dev subsets. They can change with a Fontsource update.
-const SITE_SIZES = [23852, 28008, 30496];
+// Known subset sizes. They can change with a Fontsource update.
+const EXPECTED_SIZES = [23852, 28008, 30496];
 
 async function sourceSizes(): Promise<number[]> {
   const pkgs = ["jetbrains-mono", "schibsted-grotesk"];
@@ -44,7 +44,7 @@ describe("astro build with glyphcut", () => {
     // One rule per font file: JetBrains Mono, Schibsted Grotesk normal and italic.
     const rules = html.match(/@font-face\s*{[^}]*unicode-range:\s*U\+20-7e[^}]*}/gi) ?? [];
     expect(rules).toHaveLength(3);
-    // The site characters are in the range as well.
+    // The extra characters are in the range as well.
     for (const rule of rules) expect(rule).toContain("U+2190-2193");
   });
 
@@ -58,11 +58,11 @@ describe("astro build with glyphcut", () => {
     expect(html.match(/<link rel="preload"[^>]*\.woff2/g)).toHaveLength(3);
   });
 
-  it("subsets the fonts to the site sizes", async () => {
+  it("subsets the fonts to the known sizes", async () => {
     const dir = `${dist}_astro/fonts`;
     const files = (await readdir(dir)).filter((f) => f.endsWith(".woff2"));
     const sizes = await Promise.all(files.map(async (f) => (await stat(`${dir}/${f}`)).size));
-    for (const expected of SITE_SIZES) {
+    for (const expected of EXPECTED_SIZES) {
       const close = sizes.filter((size) => Math.abs(size - expected) / expected < 0.02);
       expect(close.length, `a file near ${expected} B in ${sizes.join(", ")}`).toBeGreaterThan(0);
     }

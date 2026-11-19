@@ -14,7 +14,7 @@ test("decodes entities in text", () => {
 });
 
 test("counts alt and placeholder values", () => {
-  expect(chars(pageCodePoints('<img alt="ž &amp; x"><input placeholder="ř">'))).toBe(" &xřž");
+  expect(chars(pageCodePoints('<img alt="€ &amp; x"><input placeholder="é">'))).toBe(" &xé€");
 });
 
 test("keeps a '>' inside a quoted attribute", () => {
@@ -22,7 +22,7 @@ test("keeps a '>' inside a quoted attribute", () => {
 });
 
 test("counts an unquoted attribute", () => {
-  expect(chars(pageCodePoints("<img alt=ž>"))).toBe("ž");
+  expect(chars(pageCodePoints("<img alt=€>"))).toBe("€");
 });
 
 test("skips head, script, style, template, comments, title, aria-label and control characters", () => {
@@ -45,13 +45,13 @@ test("skips head and script in uppercase", () => {
 
 test("lists missing characters with sorted pages", () => {
   const pages = new Map([
-    ["b.html", set("ž→")],
-    ["a.html", set("ž")],
+    ["b.html", set("€→")],
+    ["a.html", set("€")],
   ]);
-  expect(missingCodePoints(pages, "→")).toEqual(new Map([[0x17e, ["a.html", "b.html"]]]));
+  expect(missingCodePoints(pages, "→")).toEqual(new Map([[0x20ac, ["a.html", "b.html"]]]));
 });
 
 test("sorts missing characters by code point", () => {
-  const missing = missingCodePoints(new Map([["a.html", set("ž©")]]), "");
-  expect([...missing.keys()]).toEqual([0xa9, 0x17e]);
+  const missing = missingCodePoints(new Map([["a.html", set("€©")]]), "");
+  expect([...missing.keys()]).toEqual([0xa9, 0x20ac]);
 });

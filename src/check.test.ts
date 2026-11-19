@@ -34,16 +34,16 @@ async function run(files: Record<string, string>, glyphs: string, options?: Chec
 test("warns once for each missing character, with two pages at most", async () => {
   const { done, logger } = await run(
     {
-      "index.html": "<p>ž</p>",
-      "blog/a/index.html": "<p>ž</p>",
-      "blog/b/index.html": "<p>ž</p>",
-      "uses/index.html": "<p>ž</p>",
+      "index.html": "<p>€</p>",
+      "about/index.html": "<p>€</p>",
+      "contact/index.html": "<p>€</p>",
+      "pricing/index.html": "<p>€</p>",
     },
     "abc ",
   );
   await done;
   expect(logger.warn.mock.calls).toEqual([
-    ['"ž" (U+017E) is not in the glyph set: blog/a/index.html, blog/b/index.html and 2 more'],
+    ['"€" (U+20AC) is not in the glyph set: about/index.html, contact/index.html and 2 more'],
   ]);
   expect(logger.info).not.toHaveBeenCalled();
 });
@@ -65,7 +65,7 @@ test("passes an empty dir, also in strict mode", async () => {
 });
 
 test("strict throws after the warnings", async () => {
-  const { done, logger } = await run({ "index.html": "<p>ž©</p>" }, "", { strict: true });
+  const { done, logger } = await run({ "index.html": "<p>€©</p>" }, "", { strict: true });
   await expect(done).rejects.toThrow(
     new GlyphcutError("2 characters are not in the glyph set. See the warnings above."),
   );
@@ -74,7 +74,7 @@ test("strict throws after the warnings", async () => {
 });
 
 test("ignores files that are not HTML", async () => {
-  const { done, logger } = await run({ "a.txt": "ž", "index.html": "<p>a</p>" }, "a", {
+  const { done, logger } = await run({ "a.txt": "€", "index.html": "<p>a</p>" }, "a", {
     strict: true,
   });
   await done;

@@ -1,10 +1,10 @@
 import { glyphcut, glyphcutCheck } from "astro-glyphcut";
 import { defineConfig } from "astro/config";
 
-// The 29 non-ASCII characters of celustka.dev.
+// 29 common non-ASCII characters: quotes, dashes, arrows and symbols.
 const extra = " ©«°±·»×‐–—‘’‚“”„•…′″‹›←↑→↓−";
 
-// The page has "ž", which is not in the glyph set. The strict check must fail the build.
+// The page has "€", which is not in the glyph set. The strict check must fail the build.
 const provider = glyphcut({ text: { ascii: true, extra } });
 
 export default defineConfig({

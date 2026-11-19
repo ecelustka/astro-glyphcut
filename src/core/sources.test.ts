@@ -127,9 +127,9 @@ describe("findSources with fontsource", () => {
       await realpath(new URL("node_modules/@fontsource-variable/schibsted-grotesk", REPO)),
       join(dir, "node_modules", "@fontsource-variable", "schibsted-grotesk"),
     );
-    await mkdir(join(dir, "packages", "site"), { recursive: true });
+    await mkdir(join(dir, "packages", "app"), { recursive: true });
     const files = await findSources({
-      root: pathToFileURL(`${dir}/packages/site/`),
+      root: pathToFileURL(`${dir}/packages/app/`),
       family: "Schibsted Grotesk",
       options: { fontsource: "schibsted-grotesk" },
       weights: ["400 800"],
