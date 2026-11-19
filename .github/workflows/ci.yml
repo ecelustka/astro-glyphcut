@@ -55,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         node: [22, 26]
-        astro: ["7.0.0", latest]
+        astro: ["6.0.0", "6", "7.0.0", latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -72,6 +72,10 @@ jobs:
 
   types:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        astro: ["6", latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -82,5 +86,6 @@ jobs:
           node-version: 26
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm -r update astro@${{ matrix.astro }}
       - run: pnpm build
       - run: pnpm test:types

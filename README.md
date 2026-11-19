@@ -81,7 +81,7 @@ Subsets go to `node_modules/.astro/glyphcut/` and are rebuilt when the font, opt
 
 ## Requirements
 
-Node 22.12 or later and Astro 7.
+Node 22.12 or later and Astro 6 or 7.
 
 ## Licenses
 
