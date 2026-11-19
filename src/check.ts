@@ -28,7 +28,8 @@ export function checkIntegration(glyphs: string, options: CheckOptions = {}): As
 
         const missing = missingCodePoints(pages, glyphs);
         if (missing.size === 0) {
-          logger.info(`all characters of ${pages.size} pages are in the glyph set`);
+          const count = pages.size === 1 ? "1 page" : `${pages.size} pages`;
+          logger.info(`all characters of ${count} are in the glyph set`);
           return;
         }
         for (const [point, names] of missing) {

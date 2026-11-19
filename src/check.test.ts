@@ -71,7 +71,10 @@ test("strict throws after the warnings", async () => {
 });
 
 test("ignores files that are not HTML", async () => {
-  const { done, logger } = await run({ "a.txt": "ž" }, "a", { strict: true });
+  const { done, logger } = await run({ "a.txt": "ž", "index.html": "<p>a</p>" }, "a", {
+    strict: true,
+  });
   await done;
   expect(logger.warn).not.toHaveBeenCalled();
+  expect(logger.info.mock.calls).toEqual([["all characters of 1 page are in the glyph set"]]);
 });
