@@ -1,11 +1,19 @@
 import { createHash, randomBytes } from "node:crypto";
 import { access, mkdir, readdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import type { SourceFile } from "./sources.ts";
-import { subset } from "./subset.ts";
+import { GlyphcutError, subset } from "./subset.ts";
 import { engineVersions } from "./versions.ts";
+
+const DEFAULT_CACHE_DIR = "./node_modules/.astro/glyphcut";
+
+/** The cache folder as a `file:` URL with an end slash. A relative `cacheDir` starts at the root. */
+export function cacheUrl(root: URL, cacheDir: string = DEFAULT_CACHE_DIR): URL {
+  if (cacheDir === "") throw new GlyphcutError("cacheDir must not be empty.");
+  return pathToFileURL(`${resolve(fileURLToPath(root), cacheDir)}/`);
+}
 
 export type CacheKeyParts = {
   source: Uint8Array;

@@ -80,6 +80,19 @@ describe("glyphcut provider", () => {
     expect(provider.config).toEqual({ text: { ascii: true } });
   });
 
+  it("writes the subsets to cacheDir", async () => {
+    const { dir, root } = await tempRoot();
+    const custom = join(dir, "custom-cache");
+    const provider = glyphcut({ text: {}, cacheDir: custom });
+    await provider.init?.({ root } as Parameters<NonNullable<typeof provider.init>>[0]);
+    const result = await resolve(provider, { fontsource: "schibsted-grotesk" });
+    expect(result?.fonts.length).toBeGreaterThan(0);
+    for (const font of result?.fonts ?? []) {
+      expect(font.src[0]).toMatchObject({ url: expect.stringContaining(custom) });
+    }
+    expect(existsSync(join(dir, "node_modules/.astro/glyphcut"))).toBe(false);
+  });
+
   it("returns one font for each style of a variable font", async () => {
     const { provider } = await setup({ ascii: true });
     const result = await resolve(provider, { fontsource: "schibsted-grotesk" });
