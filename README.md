@@ -11,7 +11,7 @@ pnpm add -D astro-glyphcut
 In `astro.config.ts`:
 
 ```ts
-import { glyphcut } from "astro-glyphcut";
+import { glyphcut, glyphcutCheck } from "astro-glyphcut";
 import { defineConfig } from "astro/config";
 
 const cut = glyphcut({ text: { ascii: true, extra: "©«°±·»×–—‘’“”•…− " } });
@@ -40,6 +40,7 @@ export default defineConfig({
       },
     },
   ],
+  integrations: [glyphcutCheck(cut)],
 });
 ```
 
@@ -75,6 +76,18 @@ Astro's `subsets` and `formats` family fields are ignored. Use `options.subset` 
 ## Errors and warnings
 
 A Fontsource package that is not installed, a missing file, style or feature, a static file without a weight when `weights` is a range, an unknown weight keyword, or both or neither of `fontsource` and `src` is an error. The error is logged with the `[glyphcut]` prefix and `astro build` exits with code 1. `astro dev` keeps running without that font. A character the font lacks only logs a warning, prefixed with `[glyphcut]`, and the browser uses the fallback font for it.
+
+## Check the pages
+
+`glyphcutCheck(cut)` is an Astro integration. After `astro build` it reads every `.html` file in the output and warns about each character that is not in the glyph set:
+
+```
+[WARN] [glyphcut] "€" (U+20AC) is not in the glyph set: about/index.html, pricing/index.html and 3 more
+```
+
+It reads text nodes and `alt` and `placeholder` values. It skips `head`, `script`, `style`, `template`, comments, `title` and `aria-label` attributes, and control characters. It does not run in `astro dev`, and it does not see pages rendered on request or text that JavaScript adds in the browser.
+
+With `glyphcutCheck(cut, { strict: true })`, `astro build` exits with code 1 when a character is missing.
 
 ## Cache
 

@@ -46,6 +46,7 @@
   "dependencies": {
     "fontverter": "^2.0.0",
     "harfbuzzjs": "^1.6.1",
+    "parse5": "^8.1.1",
     "subset-font": "^2.9.0"
   },
   "devDependencies": {

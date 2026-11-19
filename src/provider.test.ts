@@ -119,14 +119,14 @@ describe("glyphcut provider", () => {
   });
 
   it("warns about a glyph the font does not have", async () => {
-    const { provider } = await setup({ ascii: true, extra: "ž" });
+    const { provider } = await setup({ ascii: true, extra: "Ω" });
     await resolve(provider, { fontsource: "schibsted-grotesk" });
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith('[glyphcut] schibsted-grotesk: no glyph for "ž" (U+017E)');
+    expect(warn).toHaveBeenCalledWith('[glyphcut] schibsted-grotesk: no glyph for "Ω" (U+03A9)');
   });
 
   it("warns about a missing glyph once per process", async () => {
-    const { provider } = await setup({ ascii: true, extra: "ž" });
+    const { provider } = await setup({ ascii: true, extra: "Ω" });
     await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
     await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
     expect(warn).toHaveBeenCalledTimes(1);

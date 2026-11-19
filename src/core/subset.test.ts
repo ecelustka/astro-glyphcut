@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { fontsourceFile, SITE_EXTRA } from "./fonts.test-utils.ts";
+import { COMMON_EXTRA, fontsourceFile } from "./fonts.test-utils.ts";
 import { inspectFont } from "./inspect.ts";
 import { GlyphcutError, subset } from "./subset.ts";
 import { glyphSet } from "./text.ts";
@@ -10,7 +10,7 @@ const schibsted = () =>
     "@fontsource-variable/schibsted-grotesk",
     "schibsted-grotesk-latin-wght-normal.woff2",
   );
-const glyphs = glyphSet({ ascii: true, extra: SITE_EXTRA });
+const glyphs = glyphSet({ ascii: true, extra: COMMON_EXTRA });
 
 describe("subset", () => {
   test("keeps exactly the requested characters the source has", async () => {
@@ -58,8 +58,8 @@ describe("subset", () => {
   });
 
   test("reports characters the source does not have", async () => {
-    const out = await subset({ data: await schibsted(), glyphs: glyphs + "ž" });
-    expect(out.missing).toContain(0x17e);
+    const out = await subset({ data: await schibsted(), glyphs: glyphs + "Ω" });
+    expect(out.missing).toContain(0x3a9);
   });
 
   test("does not clamp a static font", async () => {
@@ -71,8 +71,8 @@ describe("subset", () => {
     expect((await inspectFont(out.data)).axes.wght).toBeUndefined();
   });
 
-  // Pins the "Done when" size of the site's committed font. It can change with a font update.
-  test("matches the site size", async () => {
+  // Pins a known subset size. It can change with a font update.
+  test("matches a known subset size", async () => {
     const data = await fontsourceFile(
       "@fontsource-variable/jetbrains-mono",
       "jetbrains-mono-latin-wght-normal.woff2",

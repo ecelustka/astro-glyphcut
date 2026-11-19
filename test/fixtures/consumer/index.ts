@@ -1,11 +1,18 @@
-import { glyphcut, GlyphcutError } from "astro-glyphcut";
-import type { FamilyOptions, GlyphcutOptions, SrcOption, TextOptions } from "astro-glyphcut";
+import { glyphcut, glyphcutCheck, GlyphcutError } from "astro-glyphcut";
+import type {
+  CheckOptions,
+  FamilyOptions,
+  GlyphcutOptions,
+  SrcOption,
+  TextOptions,
+} from "astro-glyphcut";
 import { defineConfig } from "astro/config";
 
 const text: TextOptions = { ascii: true, extra: "→" };
 const options: GlyphcutOptions = { text };
 const provider = glyphcut(options);
 glyphcut({ text, cacheDir: "./.cache/glyphcut" });
+const strict: CheckOptions = { strict: true };
 const error: Error = new GlyphcutError("x");
 void error;
 
@@ -21,6 +28,7 @@ export default defineConfig({
     { provider, name: "C", cssVariable: "--font-c", options: { src: list } },
     { provider, name: "D", cssVariable: "--font-d", options: fromFontsource },
   ],
+  integrations: [glyphcutCheck(provider, strict)],
 });
 
 // Negative cases: each line must be a type error, so a lost FamilyOptions type fails the check.
@@ -40,3 +48,6 @@ glyphcut({ text: { ascii: "yes" } });
 
 // @ts-expect-error cacheDir must be a string
 glyphcut({ text, cacheDir: 1 });
+
+// @ts-expect-error strict must be a boolean
+glyphcutCheck(provider, { strict: "yes" });
