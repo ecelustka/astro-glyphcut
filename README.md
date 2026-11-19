@@ -87,7 +87,7 @@ A Fontsource package that is not installed, a missing file, style or feature, a 
 
 It reads text nodes and `alt` and `placeholder` values. It skips `head`, `script`, `style`, `template`, comments, `title` and `aria-label` attributes, and control characters. It does not run in `astro dev`, and it does not see pages rendered on request or text that JavaScript adds in the browser.
 
-With `cut.check({ strict: true })`, `astro build` also exits with code 1.
+With `cut.check({ strict: true })`, `astro build` exits with code 1 when a character is missing.
 
 ## Upgrade from 0.1
 

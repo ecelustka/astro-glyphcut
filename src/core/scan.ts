@@ -8,7 +8,7 @@ const ATTRIBUTES = ["alt", "placeholder"];
 
 function skipped(node: Node | undefined): boolean {
   for (; node; node = node.parent) {
-    if (node.type === ELEMENT_NODE && SKIP.has(node.name)) return true;
+    if (node.type === ELEMENT_NODE && SKIP.has(node.name.toLowerCase())) return true;
   }
   return false;
 }
@@ -41,7 +41,10 @@ export function missingCodePoints(
   const missing = new Map<number, string[]>();
   for (const [page, points] of pages) {
     for (const point of points) {
-      if (!known.has(point)) missing.set(point, [...(missing.get(point) ?? []), page]);
+      if (known.has(point)) continue;
+      const names = missing.get(point);
+      if (names) names.push(page);
+      else missing.set(point, [page]);
     }
   }
   return new Map(

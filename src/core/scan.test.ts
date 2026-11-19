@@ -29,6 +29,12 @@ test("skips head, script, style, template, comments, title, aria-label and contr
   expect(chars(pageCodePoints(html))).toBe("ab");
 });
 
+test("skips head and script in uppercase", () => {
+  expect(chars(pageCodePoints("<HEAD><TITLE>Ω</TITLE></HEAD><SCRIPT>Ω</SCRIPT><p>a</p>"))).toBe(
+    "a",
+  );
+});
+
 test("lists missing characters with sorted pages", () => {
   const pages = new Map([
     ["b.html", set("ž→")],
