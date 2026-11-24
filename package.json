@@ -1,6 +1,6 @@
 {
   "name": "astro-glyphcut",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Astro 7 font provider that subsets fonts at build time",
   "keywords": [
     "astro",
