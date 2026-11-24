@@ -9,6 +9,7 @@ import type { FamilyOptions } from "./core/sources.ts";
 import { GlyphcutError } from "./core/subset.ts";
 import { formatPoint, glyphSet } from "./core/text.ts";
 import type { TextOptions } from "./core/text.ts";
+import { setLogger } from "./provider.ts";
 
 export type CheckOptions = { strict?: boolean };
 
@@ -21,13 +22,21 @@ export function glyphcutCheck(
   if (provider.name !== "glyphcut" || !text) {
     throw new GlyphcutError("glyphcutCheck needs a provider from glyphcut().");
   }
-  return checkIntegration(glyphSet(text), options);
+  return checkIntegration(provider, glyphSet(text), options);
 }
 
-function checkIntegration(glyphs: string, options: CheckOptions = {}): AstroIntegration {
+function checkIntegration(
+  provider: FontProvider<FamilyOptions>,
+  glyphs: string,
+  options: CheckOptions = {},
+): AstroIntegration {
   return {
     name: "glyphcut",
     hooks: {
+      // This hook runs before Astro resolves the fonts, also in astro dev.
+      "astro:config:setup": ({ logger }) => {
+        setLogger(provider, logger);
+      },
       "astro:build:done": async ({ dir, logger }) => {
         const root = fileURLToPath(dir);
         const pages = new Map<string, Set<number>>();
