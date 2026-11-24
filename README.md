@@ -77,6 +77,16 @@ Astro's `subsets` and `formats` family fields are ignored. Use `options.subset` 
 
 A Fontsource package that is not installed, a missing file, style or feature, a static file without a weight when `weights` is a range, an unknown weight keyword, or both or neither of `fontsource` and `src` is an error. The error is logged with the `[glyphcut]` prefix and `astro build` exits with code 1. `astro dev` keeps running without that font. A character the font lacks only logs a warning, prefixed with `[glyphcut]`, and the browser uses the fallback font for it.
 
+## Logs
+
+Add `glyphcutCheck(cut)` to `integrations` and glyphcut's messages match the rest of the Astro output, with a timestamp and colors:
+
+```
+22:50:37 [glyphcut] jetbrains-mono-normal: 40 404 → 23 852 B
+```
+
+They also follow `logLevel` and `--silent`. Without `glyphcutCheck`, glyphcut prints plain `[glyphcut]` lines to the console.
+
 ## Check the pages
 
 `glyphcutCheck(cut)` is an Astro integration. After `astro build` it reads every `.html` file in the output and warns about each character that is not in the glyph set:

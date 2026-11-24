@@ -1,4 +1,4 @@
-import type { FontProvider } from "astro";
+import type { AstroIntegrationLogger, FontProvider } from "astro";
 
 import { cachedSubset, cacheLabel, cacheUrl, kebab } from "./core/cache.ts";
 import { findSources, weightRange } from "./core/sources.ts";
@@ -8,6 +8,22 @@ import { formatPoint, glyphSet, unicodeRange } from "./core/text.ts";
 import type { TextOptions } from "./core/text.ts";
 
 const PREFIX = "[glyphcut]";
+
+type Logger = Pick<AstroIntegrationLogger, "info" | "warn" | "error">;
+
+const consoleLogger: Logger = {
+  info: (message) => console.info(`${PREFIX} ${message}`),
+  warn: (message) => console.warn(`${PREFIX} ${message}`),
+  error: (message) => console.error(`${PREFIX} ${message}`),
+};
+
+// Astro gives providers no logger, so glyphcutCheck passes in its own. Astro rejects unknown
+// keys on a provider, so this map holds it.
+const loggers = new WeakMap<FontProvider<FamilyOptions>, Logger>();
+
+export function setLogger(provider: FontProvider<FamilyOptions>, logger: Logger): void {
+  loggers.set(provider, logger);
+}
 
 /** 46752 becomes "46 752". */
 function groups(value: number): string {
@@ -54,18 +70,19 @@ export function glyphcut(options: GlyphcutOptions): FontProvider<FamilyOptions> 
   // One warning for each family and character, and one line for each error, in this process.
   const warned = new Set<string>();
   const errors = new Set<string>();
+  const log = (): Logger => loggers.get(provider) ?? consoleLogger;
 
   function report(error: unknown): void {
     fail();
     if (!(error instanceof GlyphcutError)) {
-      console.error(`${PREFIX} Unexpected error. Astro prints the details below.`);
+      log().error("Unexpected error. Astro prints the details below.");
     } else if (!errors.has(error.message)) {
       errors.add(error.message);
-      console.error(`${PREFIX} ${error.message}`);
+      log().error(error.message);
     }
   }
 
-  return {
+  const provider: FontProvider<FamilyOptions> = {
     name: "glyphcut",
     config: options,
     init(context) {
@@ -82,6 +99,7 @@ export function glyphcut(options: GlyphcutOptions): FontProvider<FamilyOptions> 
       }
     },
   };
+  return provider;
 
   async function resolve({
     familyName,
@@ -115,16 +133,14 @@ export function glyphcut(options: GlyphcutOptions): FontProvider<FamilyOptions> 
 
       if (result.created && result.sizes) {
         const label = cacheLabel(familyName, source.style, source.weight);
-        console.info(
-          `${PREFIX} ${label}: ${groups(result.sizes.before)} → ${groups(result.sizes.after)} B`,
-        );
+        log().info(`${label}: ${groups(result.sizes.before)} → ${groups(result.sizes.after)} B`);
       }
       for (const point of result.missing) {
         const key = `${family}:${point}`;
         if (warned.has(key)) continue;
         warned.add(key);
-        console.warn(
-          `${PREFIX} ${family}: no glyph for "${String.fromCodePoint(point)}" (${formatPoint(point)})`,
+        log().warn(
+          `${family}: no glyph for "${String.fromCodePoint(point)}" (${formatPoint(point)})`,
         );
       }
 

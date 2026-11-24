@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import type { FontProvider } from "astro";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { glyphcutCheck } from "./check.ts";
 import type { FamilyOptions } from "./index.ts";
 import { glyphcut } from "./provider.ts";
 
@@ -123,6 +124,24 @@ describe("glyphcut provider", () => {
     await resolve(provider, { fontsource: "schibsted-grotesk" });
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn).toHaveBeenCalledWith('[glyphcut] schibsted-grotesk: no glyph for "Ω" (U+03A9)');
+  });
+
+  it("logs through the Astro logger from glyphcutCheck", async () => {
+    const { provider } = await setup({ ascii: true, extra: "Ω" });
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    await glyphcutCheck(provider).hooks["astro:config:setup"]!({ logger } as never);
+    await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
+    await resolve(provider, {});
+    expect(logger.info.mock.calls).toEqual([
+      [expect.stringMatching(/^schibsted-grotesk-normal: [\d ]+ → [\d ]+ B$/)],
+    ]);
+    expect(logger.warn.mock.calls).toEqual([['schibsted-grotesk: no glyph for "Ω" (U+03A9)']]);
+    expect(logger.error.mock.calls).toEqual([
+      ["Font Schibsted Grotesk needs either fontsource or src."],
+    ]);
+    expect(info).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
   });
 
   it("warns about a missing glyph once per process", async () => {
