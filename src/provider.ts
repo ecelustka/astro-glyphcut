@@ -9,12 +9,14 @@ import type { TextOptions } from "./core/text.ts";
 
 const PREFIX = "[glyphcut]";
 
-type Logger = Pick<AstroIntegrationLogger, "info" | "warn" | "error">;
+type Logger = Pick<AstroIntegrationLogger, "info" | "warn" | "error" | "debug">;
 
 const consoleLogger: Logger = {
   info: (message) => console.info(`${PREFIX} ${message}`),
   warn: (message) => console.warn(`${PREFIX} ${message}`),
   error: (message) => console.error(`${PREFIX} ${message}`),
+  // The console has no log level, so debug lines would always print.
+  debug: () => {},
 };
 
 // Astro gives providers no logger, so glyphcutCheck passes in its own. Astro rejects unknown
@@ -131,9 +133,15 @@ export function glyphcut(options: GlyphcutOptions): FontProvider<FamilyOptions> 
         weight: range,
       });
 
+      const label = cacheLabel(familyName, source.style, source.weight);
       if (result.created && result.sizes) {
-        const label = cacheLabel(familyName, source.style, source.weight);
-        log().info(`${label}: ${groups(result.sizes.before)} → ${groups(result.sizes.after)} B`);
+        const { before, after } = result.sizes;
+        const change = Math.round((after / before - 1) * 100);
+        log().info(
+          `${label}: ${groups(before)} → ${groups(after)} B (${change > 0 ? "+" : ""}${change}%)`,
+        );
+      } else {
+        log().debug(`${label}: cached`);
       }
       for (const point of result.missing) {
         const key = `${family}:${point}`;

@@ -113,7 +113,9 @@ describe("glyphcut provider", () => {
     await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
     expect(info).toHaveBeenCalledTimes(1);
     const line = String(info.mock.calls[0]?.[0]);
-    expect(line).toMatch(/^\[glyphcut\] schibsted-grotesk-normal: \d[\d ]* → \d[\d ]* B$/);
+    expect(line).toMatch(
+      /^\[glyphcut\] schibsted-grotesk-normal: \d[\d ]* → \d[\d ]* B \(-\d+%\)$/,
+    );
     info.mockClear();
     await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
     expect(info).not.toHaveBeenCalled();
@@ -128,13 +130,15 @@ describe("glyphcut provider", () => {
 
   it("logs through the Astro logger from glyphcutCheck", async () => {
     const { provider } = await setup({ ascii: true, extra: "Ω" });
-    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
     await glyphcutCheck(provider).hooks["astro:config:setup"]!({ logger } as never);
+    await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
     await resolve(provider, { fontsource: "schibsted-grotesk" }, { styles: ["normal"] });
     await resolve(provider, {});
     expect(logger.info.mock.calls).toEqual([
-      [expect.stringMatching(/^schibsted-grotesk-normal: [\d ]+ → [\d ]+ B$/)],
+      [expect.stringMatching(/^schibsted-grotesk-normal: [\d ]+ → [\d ]+ B \(-\d+%\)$/)],
     ]);
+    expect(logger.debug.mock.calls).toEqual([["schibsted-grotesk-normal: cached"]]);
     expect(logger.warn.mock.calls).toEqual([['schibsted-grotesk: no glyph for "Ω" (U+03A9)']]);
     expect(logger.error.mock.calls).toEqual([
       ["Font Schibsted Grotesk needs either fontsource or src."],

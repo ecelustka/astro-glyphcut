@@ -82,10 +82,10 @@ A Fontsource package that is not installed, a missing file, style or feature, a 
 Add `glyphcutCheck(cut)` to `integrations` and glyphcut's messages match the rest of the Astro output, with a timestamp and colors:
 
 ```
-22:50:37 [glyphcut] jetbrains-mono-normal: 40 404 → 23 852 B
+22:50:37 [glyphcut] jetbrains-mono-normal: 40 404 → 23 852 B (-41%)
 ```
 
-They also follow `logLevel` and `--silent`. Without `glyphcutCheck`, glyphcut prints plain `[glyphcut]` lines to the console.
+They also follow `logLevel` and `--silent`. A font that comes from the cache logs only with `--verbose`. Without `glyphcutCheck`, glyphcut prints plain `[glyphcut]` lines to the console.
 
 ## Check the pages
 
